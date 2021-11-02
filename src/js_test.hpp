@@ -67,8 +67,18 @@ inline typename T::Function TestClass<T>::create_constructor(ContextType ctx)
 template <typename T>
 void TestClass<T>::test(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
 {
+    ObjectType arg = Value::validated_to_object(ctx, args[0], "object");
+
+    if (Object::template is_instance<ResultsClass<T>>(ctx, arg)) {
+        auto results = get_internal<T, ResultsClass<T>>(ctx, arg);
+
+        return_value.set(Value::from_string(ctx, results->get_query().get_description()));
+    }
+    else {
+        return_value.set(Value::from_string(ctx, "Test!"));
+    }
+
     // auto app = *get_internal<T, AppClass<T>>(ctx, this_object);
-    return_value.set(Value::from_string(ctx, "Test!"));
 }
 
 } // namespace js

@@ -4,9 +4,24 @@
       "mode": "auto"
     }
   ],
-  "gitlens.advanced.blame.customArguments": [
-    "--ignore-revs-file",
-    ".gitignore-revs"
-  ],
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "gitlens.advanced.blame.customArguments": ["--ignore-revs-file", ".gitignore-revs"],
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "files.associations": {
+    "utility": "cpp",
+    "deque": "cpp",
+    "functional": "cpp",
+    "hash_map": "cpp",
+    "hash_set": "cpp",
+    "list": "cpp",
+    "map": "cpp",
+    "set": "cpp",
+    "string": "cpp",
+    "unordered_map": "cpp",
+    "unordered_set": "cpp",
+    "vector": "cpp",
+    "*.ipp": "cpp",
+    "algorithm": "cpp",
+    "forward_list": "cpp",
+    "memory": "cpp"
+  }
 }

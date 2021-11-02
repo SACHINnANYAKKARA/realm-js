@@ -1,9 +1,34 @@
 {
-    // Use IntelliSense to learn about possible Node.js debug attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
+  // Use IntelliSense to learn about possible Node.js debug attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Build Realm Android",
+      "cwd": "${workspaceFolder}",
+      "program": "${workspaceFolder}/scripts/build-android.js",
+      "args": ["--arch=x86"],
+      "request": "launch",
+      "type": "node"
+    },
+    {
+      "name": "(gdb) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "node",
+      "args": [
+        "--expose_gc",
+        "${workspaceRoot}/tests/node_modules/jasmine/bin/jasmine.js",
+        "spec/unit_tests.js",
+        "--filter=."
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceRoot}/tests",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
         {
             "name": "Build Realm Android",
             "cwd": "${workspaceFolder}",
@@ -76,6 +101,13 @@
             "address": "localhost",
             "port": 5858
         },
+        {
+          "type": "lldb",
+          "request": "launch",
+          "name": "LLDB Node",
+          "program": "node",
+          "args": ["--expose_gc"]
+        }
         {
             "type": "lldb",
             "request": "launch",
