@@ -314,7 +314,116 @@ describe("Flexible sync", () => {
         });
       });
 
-      describe("add", () => {});
+      describe("#add", () => {
+        // Behaviour is tested in #find and #findByName
+
+        it("returns a subscription object", () => {
+          const { sub } = addDefaultSubscription();
+          expect(sub).is.instanceOf(Realm.Subscription);
+        });
+      });
+
+      describe("#removeByName", () => {
+        it("returns false and does not remove any subscriptions if the subscription is not found", () => {
+          const { subs } = addDefaultSubscription();
+
+          subs.write(() => {
+            expect(subs.removeByName("test")).to.be.false;
+          });
+          expect(subs.empty).to.be.false;
+        });
+
+        it("returns true and removes the subscription if the subscription is found", () => {
+          const { subs } = addDefaultSubscription({ name: "test" });
+
+          subs.write(() => {
+            expect(subs.removeByName("test")).to.be.true;
+          });
+          expect(subs.empty).to.be.true;
+        });
+      });
+
+      describe("#remove", () => {
+        it("returns false and does not remove any subscriptions if the subscription for the query is not found", () => {
+          const query = realm.objects("Person");
+          const query2 = realm.objects("Dog");
+
+          const { subs } = addSubscription(query);
+
+          subs.write(() => {
+            expect(subs.remove(query2)).to.be.false;
+          });
+          expect(subs.empty).to.be.false;
+        });
+
+        it("returns true and removes the subscription for the query if it is found", () => {
+          const query = realm.objects("Person");
+          const { subs } = addSubscription(query);
+
+          subs.write(() => {
+            expect(subs.remove(query)).to.be.true;
+          });
+          expect(subs.empty).to.be.true;
+        });
+      });
+
+      describe("#removeSubscription", () => {
+        it("returns false if the subscription is not found", () => {
+          const { subs, sub } = addDefaultSubscription();
+          subs.write(() => {
+            subs.addSubscription(realm.objects("Dog"));
+          });
+          subs.write(() => {
+            subs.removeSubscription(sub);
+          });
+
+          subs.write(() => {
+            expect(subs.removeSubscription(sub)).to.be.false;
+          });
+          expect(subs.empty).to.be.false;
+        });
+
+        it("returns true and removes the subscription if the subscription is found", () => {
+          const { subs, sub } = addDefaultSubscription();
+
+          subs.write(() => {
+            expect(subs.removeSubscription(sub)).to.be.true;
+          });
+          expect(subs.empty).to.be.true;
+        });
+      });
+
+      describe("#removeAll", () => {
+        it("returns 0 if no subscriptions exist", () => {
+          const subs = realm.getSubscriptions();
+          expect(subs.removeAll()).to.equal(0);
+        });
+
+        it("removes all subscriptions and returns the number of subscriptions removed", () => {
+          const { subs } = addDefaultSubscription();
+          addDefaultSubscription();
+
+          expect(subs.removeAll()).to.equal(2);
+          expect(subs.empty).to.be.true;
+        });
+      });
+
+      describe("#removeByObjectType", () => {
+        it("returns 0 if no subscriptions for the object type exist", () => {
+          const { subs } = addDefaultSubscription();
+          expect(subs.removeByObjectType("Dog")).to.equal(0);
+          expect(subs.empty).to.be.true;
+        });
+
+        it("removes all subscriptions for the object type and returns the number of subscriptions removed", () => {
+          const { subs } = addDefaultSubscription();
+          addDefaultSubscription();
+          addSubscription(realm.objects("Dog"));
+
+          expect(subs.removeByObjectType("Person")).to.equal(2);
+          expect(subs.empty).to.be.false;
+        });
+      });
 
       describe("multi-client behaviour", () => {
         it("does not automatically update if another client updates subscriptions after we call getSubscriptions", () => {
@@ -328,7 +437,7 @@ describe("Flexible sync", () => {
             otherClientSubs.add(otherClientRealm.objects("Person"));
           });
 
-          expect(otherClientSubs.empty).to.be.falsee;
+          expect(otherClientSubs.empty).to.be.false;
           expect(subs.empty).to.be.true;
         });
 
@@ -349,6 +458,10 @@ describe("Flexible sync", () => {
           expect(subs.empty).to.be.false;
         });
       });
+    });
+
+    describe("batching multiple updates", () => {
+      // TODO
     });
   });
 
