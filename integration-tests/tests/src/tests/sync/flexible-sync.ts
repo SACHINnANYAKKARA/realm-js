@@ -17,13 +17,14 @@
 ////////////////////////////////////////////////////////////////////////////
 
 import { expect } from "chai";
+
 import { PersonSchema } from "../../schemas/person-and-dog-with-object-ids";
 
 describe("Flexible sync", () => {
   let realm: Realm;
 
   beforeEach(() => {
-    realm = new Realm({ schema: [PersonSchema] });
+    realm = new Realm({ schema: [PersonSchema], sync: { flexible: true } });
   });
 
   afterEach(() => {
@@ -37,7 +38,7 @@ describe("Flexible sync", () => {
   });
 
   describe("SubscriptionSet", () => {
-    describe("empty", () => {
+    describe("#empty", () => {
       it("returns true if no subscriptions exist", () => {
         expect(realm.getSubscriptions().empty).to.be.true;
       });
@@ -71,7 +72,7 @@ describe("Flexible sync", () => {
       });
     });
 
-    describe("findByName", () => {
+    describe("#findByName", () => {
       it("returns null if the named subscription does not exist", () => {
         expect(realm.getSubscriptions().findByName("test")).to.be.null;
       });
@@ -89,7 +90,7 @@ describe("Flexible sync", () => {
     });
   });
 
-  describe("find", () => {
+  describe("#find", () => {
     it("returns null if the query is not subscribed to", () => {
       expect(realm.getSubscriptions().find(realm.objects("person"))).to.be.null;
     });
@@ -153,7 +154,7 @@ describe("Flexible sync", () => {
       expect(subs.find(realm.objects("Person"))).to.equal(sub);
     });
 
-    describe("state", () => {
+    describe("#state", () => {
       it("is Pending by default", () => {
         const subs = realm.getSubscriptions();
         expect(subs.state).to.equal(Realm.SubscriptionState.Pending);
@@ -162,7 +163,7 @@ describe("Flexible sync", () => {
       // TOOD do we want to duplicate tests from waitForSynchronisation here?
     });
 
-    describe("error", () => {
+    describe("#error", () => {
       it("is null by default", () => {
         const subs = realm.getSubscriptions();
         expect(subs.error).to.be.null;
@@ -191,9 +192,7 @@ describe("Flexible sync", () => {
       });
     });
 
-    // todo check that when someone else updates subs it does not change
-
-    describe("waitForSynchronization", () => {
+    describe("#waitForSynchronization", () => {
       it("waits for subscriptions to be in a ready state", async () => {
         const subs = realm.getSubscriptions();
         subs.write(() => {
@@ -217,7 +216,7 @@ describe("Flexible sync", () => {
         expect(subs.state).to.equal(Realm.SubscriptionState.Ready);
       });
 
-      it("throws if there is an error synchronising subscriptions", () => {
+      it("throws if there is an error synchronising subscriptions", async () => {
         const subs = realm.getSubscriptions();
         subs.write(() => {
           subs.add(realm.objects("Person"));
@@ -225,16 +224,35 @@ describe("Flexible sync", () => {
         expect(subs.state).to.equal(Realm.SubscriptionState.Pending);
 
         // TODO simulate error
+        await subs.waitForSynchronization();
 
         expect(subs.state).to.equal(Realm.SubscriptionState.Error);
       });
 
-      it("throws if another client updates subscriptions while waiting for syncronisation", () => {
-        // TODO
+      it("throws if another client updates subscriptions while waiting for synchronisation", () => {
+        // TODO what is the proper way to do this?
+        const otherClientRealm = new Realm({ schema: [PersonSchema], sync: { flexible: true } });
+
+        const subs = realm.getSubscriptions();
+        subs.write(() => {
+          subs.add(realm.objects("Person"));
+        });
+
+        const otherClientSubs = otherClientRealm.getSubscriptions();
+
+        expect(
+          Promise.all([
+            otherClientSubs.write(() => {
+              otherClientSubs.add(realm.objects("Person"));
+            }),
+            subs.waitForSynchronization(),
+          ]),
+        ).throws("xxx");
+        expect(subs.state).to.equal(Realm.SubscriptionState.Error);
       });
     });
 
-    describe("write/writeAsync", () => {
+    describe("#write/#writeAsync", () => {
       it("throws an error if SubscriptionSet.add is called outside of a write/writeAsync() callback", () => {
         const subs = realm.getSubscriptions();
 
@@ -255,7 +273,7 @@ describe("Flexible sync", () => {
         }).throws("Cannot modify subscriptions outside of a SubscriptionSet.write transaction.");
       });
 
-      describe("write", () => {
+      describe("#write", () => {
         it("does not throw an error if SubscriptionSet.add is called inside a write() callback", () => {
           const subs = realm.getSubscriptions();
 
@@ -299,7 +317,7 @@ describe("Flexible sync", () => {
         });
       });
 
-      describe("writeAsync", () => {
+      describe("#writeAsync", () => {
         it("does not throw an error if SubscriptionSet.add is called inside a writeAsync() callback", async () => {
           const subs = realm.getSubscriptions();
 
@@ -344,5 +362,41 @@ describe("Flexible sync", () => {
         });
       });
     });
+
+    describe("multi-client behaviour", () => {
+      it("does not automatically update if another client updates subscriptions after we call getSubscriptions", () => {
+        const subs = realm.getSubscriptions();
+        expect(subs.empty).to.be.true;
+
+        // TODO what is the proper way to do this?
+        const otherClientRealm = new Realm({ schema: [PersonSchema], sync: { flexible: true } });
+        const otherClientSubs = otherClientRealm.getSubscriptions();
+        otherClientSubs.write(() => {
+          otherClientSubs.add(otherClientRealm.objects("Person"));
+        });
+
+        expect(otherClientSubs.empty).to.be.falsee;
+        expect(subs.empty).to.be.true;
+      });
+
+      it("sees another client's updated subscriptions if we call getSubscriptions after they are modified", () => {
+        let subs = realm.getSubscriptions();
+        expect(subs.empty).to.be.true;
+
+        // TODO what is the proper way to do this?
+        const otherClientRealm = new Realm({ schema: [PersonSchema], sync: { flexible: true } });
+        const otherClientSubs = otherClientRealm.getSubscriptions();
+        otherClientSubs.write(() => {
+          otherClientSubs.add(otherClientRealm.objects("Person"));
+        });
+
+        subs = realm.getSubscriptions();
+
+        expect(otherClientSubs.empty).to.be.false;
+        expect(subs.empty).to.be.false;
+      });
+    });
   });
+
+  describe("synchronisation", () => {});
 });
