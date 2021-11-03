@@ -315,11 +315,48 @@ describe("Flexible sync", () => {
       });
 
       describe("#add", () => {
-        // Behaviour is tested in #find and #findByName
+        // Behaviour is mostly tested in #find and #findByName
 
         it("returns a subscription object", () => {
           const { sub } = addDefaultSubscription();
           expect(sub).is.instanceOf(Realm.Subscription);
+        });
+
+        describe("updateExisting", () => {
+          it("throws and does not add the subscription if a subscription with the same name but different query is added, and updateExisting is false", () => {
+            const { subs } = addDefaultSubscription({ name: "test" });
+            const query = realm.objects("Dog");
+
+            expect(() => {
+              subs.write(() => {
+                subs.add(query, { name: "test", updateExisting: false });
+              });
+            }).to.throw("xxx");
+
+            expect(subs.find(query)).to.be.null;
+          });
+
+          const testUpdateExistingTrue = (addOptions: Realm.SubscriptionOptions = {}) => {
+            const { subs } = addDefaultSubscription({ name: "test" });
+            const query = realm.objects("Dog");
+            let sub;
+
+            expect(() => {
+              subs.write(() => {
+                sub = subs.add(query, { name: "test", ...addOptions });
+              });
+            }).to.not.throw;
+
+            expect(subs.find(query)).to.equal(sub);
+          };
+
+          it("updates the existing subscription if a subscription with the same name but different query is added, and updateExisting is true", () => {
+            testUpdateExistingTrue({ updateExisting: true });
+          });
+
+          it("updates the existing subscription if a subscription with the same name but different query is added, and updateExisting is not specified", () => {
+            testUpdateExistingTrue();
+          });
         });
       });
 
@@ -396,23 +433,31 @@ describe("Flexible sync", () => {
       describe("#removeAll", () => {
         it("returns 0 if no subscriptions exist", () => {
           const subs = realm.getSubscriptions();
-          expect(subs.removeAll()).to.equal(0);
+
+          subs.write(() => {
+            expect(subs.removeAll()).to.equal(0);
+          });
         });
 
         it("removes all subscriptions and returns the number of subscriptions removed", () => {
           const { subs } = addDefaultSubscription();
           addDefaultSubscription();
 
-          expect(subs.removeAll()).to.equal(2);
-          expect(subs.empty).to.be.true;
+          subs.write(() => {
+            expect(subs.removeAll()).to.equal(2);
+            expect(subs.empty).to.be.true;
+          });
         });
       });
 
       describe("#removeByObjectType", () => {
         it("returns 0 if no subscriptions for the object type exist", () => {
           const { subs } = addDefaultSubscription();
-          expect(subs.removeByObjectType("Dog")).to.equal(0);
-          expect(subs.empty).to.be.true;
+
+          subs.write(() => {
+            expect(subs.removeByObjectType("Dog")).to.equal(0);
+            expect(subs.empty).to.be.true;
+          });
         });
 
         it("removes all subscriptions for the object type and returns the number of subscriptions removed", () => {
@@ -420,8 +465,10 @@ describe("Flexible sync", () => {
           addDefaultSubscription();
           addSubscription(realm.objects("Dog"));
 
-          expect(subs.removeByObjectType("Person")).to.equal(2);
-          expect(subs.empty).to.be.false;
+          subs.write(() => {
+            expect(subs.removeByObjectType("Person")).to.equal(2);
+            expect(subs.empty).to.be.false;
+          });
         });
       });
 
