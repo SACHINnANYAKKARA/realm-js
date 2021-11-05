@@ -33,11 +33,14 @@ namespace js {
  *
  * @tparam T The type of the elements that the Set will hold.  Inherited from \ref SetClass
  */
-template<typename T>
+template <typename T>
 class Subscription : public realm::sync::Subscription {
 public:
-    Subscription(const realm::sync::Subscription &subscription) : realm::sync::Subscription(subscription) {}
-//    void derive_property_type(StringData const &object_name, Property &prop) const;
+    Subscription(const realm::sync::Subscription& subscription)
+        : realm::sync::Subscription(subscription)
+    {
+    }
+    //    void derive_property_type(StringData const &object_name, Property &prop) const;
 
     std::vector<std::pair<Protected<typename T::Function>, NotificationToken>> m_notification_tokens;
 };
@@ -57,54 +60,69 @@ class SubscriptionClass : public ClassDefinition<T, realm::js::Subscription<T>> 
     using Arguments = js::Arguments<T>;
 
 public:
-    const std::string name = "Test";
+    const std::string name = "Subscription";
 
     static void constructor(ContextType, ObjectType, Arguments&);
     static FunctionType create_constructor(ContextType);
-    static ObjectType create_instance(ContextType, SharedApp);
+    static ObjectType create_instance(ContextType, realm::sync::Subscription);
 
-    static void get_created_at(ContextType, ObjectType, ReturnValue &);
-//    static void get_updated_at(ContextType, ObjectType, ReturnValue &);
-//    static void get_name(ContextType, ObjectType, ReturnValue &);
-//    static void get_object_class_name(ContextType, ObjectType, ReturnValue &);
-//    static void get_query_string(ContextType, ObjectType, ReturnValue &);
+    static void get_created_at(ContextType, ObjectType, ReturnValue&);
+    //    static void get_updated_at(ContextType, ObjectType, ReturnValue &);
+    //    static void get_name(ContextType, ObjectType, ReturnValue &);
+    //    static void get_object_class_name(ContextType, ObjectType, ReturnValue &);
+    //    static void get_query_string(ContextType, ObjectType, ReturnValue &);
 
     PropertyMap<T> const properties = {
         {"createdAt", {wrap<get_created_at>, nullptr}},
-//        {"updatedAt", {wrap<get_updated_at>, nullptr}},
-//        {"name", {wrap<get_name>, nullptr}},
-//        {"objectClassName", {wrap<get_object_class_name>, nullptr}},
-//        {"queryString", {wrap<get_query_string>, nullptr}},
+        //        {"updatedAt", {wrap<get_updated_at>, nullptr}},
+        //        {"name", {wrap<get_name>, nullptr}},
+        //        {"objectClassName", {wrap<get_object_class_name>, nullptr}},
+        //        {"queryString", {wrap<get_query_string>, nullptr}},
     };
 };
 
 template <typename T>
-inline typename T::Function TestClass<T>::create_constructor(ContextType ctx)
+void SubscriptionClass<T>::constructor(ContextType ctx, ObjectType this_object, Arguments& args)
 {
-    FunctionType test_constructor = ObjectWrap<T, TestClass<T>>::create_constructor(ctx);
+    set_internal<T, SubscriptionClass<T>>(ctx, this_object,
+                                          new realm::js::Subscription<T>(*(new realm::sync::Subscription())));
+}
+
+template <typename T>
+inline typename T::Function SubscriptionClass<T>::create_constructor(ContextType ctx)
+{
+    FunctionType test_constructor = ObjectWrap<T, SubscriptionClass<T>>::create_constructor(ctx);
+    return test_constructor;
 
     // PropertyAttributes attributes = ReadOnly | DontEnum | DontDelete;
     // Object::set_property(ctx, sync_constructor, "User", ObjectWrap<T, UserClass<T>>::create_constructor(ctx),
     // attributes); Object::set_property(ctx, sync_constructor, "Session", ObjectWrap<T,
     // SessionClass<T>>::create_constructor(ctx), attributes);
+}
 
-    return test_constructor;
+template <typename T>
+typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm::sync::Subscription sub)
+{
+    return create_object<T, SubscriptionClass<T>>(ctx, new realm::js::Subscription<T>(std::move(sub)));
 }
 
 /**
  * @brief Implements JavaScript Set's `.size` property
  *
  *  Returns the number of elements in the SetClass.
- *  See [MDN's reference documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/size)
+ *  See [MDN's reference
+ * documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/size)
  *
  * @param ctx JS context
  * @param object \ref ObjectType wrapping the SetClass itself
- * @param return_value \ref ReturnValue wrapping an integer that gives the number of elements in the set to return to the JS context
+ * @param return_value \ref ReturnValue wrapping an integer that gives the number of elements in the set to return to
+ * the JS context
  */
-template<typename T>
-void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType object, ReturnValue &return_value) {
+template <typename T>
+void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType object, ReturnValue& return_value)
+{
     auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
-    return_value.set(Object::create_date(sub->created_at));
+    return_value.set(Object::create_date(ctx, sub->created_at().get_nanoseconds()));
 }
 
 } // namespace js

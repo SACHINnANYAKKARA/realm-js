@@ -526,6 +526,7 @@ inline typename T::Function RealmClass<T>::create_constructor(ContextType ctx)
     FunctionType dictionary_constructor = ObjectWrap<T, DictionaryClass<T>>::create_constructor(ctx);
     FunctionType realm_object_constructor = ObjectWrap<T, RealmObjectClass<T>>::create_constructor(ctx);
     FunctionType results_constructor = ObjectWrap<T, ResultsClass<T>>::create_constructor(ctx);
+    FunctionType subscription_constructor = ObjectWrap<T, SubscriptionClass<T>>::create_constructor(ctx);
     FunctionType test_constructor = ObjectWrap<T, TestClass<T>>::create_constructor(ctx);
 
     PropertyAttributes attributes = ReadOnly | DontEnum | DontDelete;
@@ -535,6 +536,7 @@ inline typename T::Function RealmClass<T>::create_constructor(ContextType ctx)
     Object::set_property(ctx, realm_constructor, "Dictionary", dictionary_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Results", results_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Object", realm_object_constructor, attributes);
+    Object::set_property(ctx, realm_constructor, "Subscription", subscription_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Test", test_constructor, attributes);
 
 #if REALM_ENABLE_SYNC
@@ -1000,10 +1002,10 @@ void RealmClass<T>::async_open_realm(ContextType ctx, ObjectType this_object, Ar
     auto& user = config.sync_config->user;
     if (user && user->state() == SyncUser::State::Removed) {
         ObjectType object = Object::create_empty(protected_ctx);
-        Object::set_property(
-            protected_ctx, object, "message",
-            Value::from_string(protected_ctx, "Cannot asynchronously open synced Realm because the associated "
-                                              "session previously experienced a fatal error"));
+        Object::set_property(protected_ctx, object, "message",
+                             Value::from_string(protected_ctx,
+                                                "Cannot asynchronously open synced Realm because the associated "
+                                                "session previously experienced a fatal error"));
         Object::set_property(protected_ctx, object, "errorCode", Value::from_number(protected_ctx, 1));
 
         ValueType callback_arguments[] = {
