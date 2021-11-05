@@ -20,9 +20,10 @@ import { expect } from "chai";
 import { authenticateUserBefore, importAppBefore, openRealmBeforeEach } from "../../hooks";
 
 import { PersonSchema } from "../../schemas/person-and-dog-with-object-ids";
+import { itUploadsDeletesAndDownloads } from "./upload-delete-download";
 
 describe("Flexible sync", function () {
-  function addDefaultSubscription(options?: Realm.SubscriptionOptions = undefined) {
+  function addPersonSubscription(options?: Realm.SubscriptionOptions = undefined) {
     return addSubscription(this.realm.objects("Person"), options);
   }
 
@@ -58,7 +59,7 @@ describe("Flexible sync", function () {
       });
 
       it("returns false if subscriptions exist", function () {
-        const { subs } = addDefaultSubscription();
+        const { subs } = addPersonSubscription();
 
         expect(subs.empty).to.be.false;
       });
@@ -89,7 +90,7 @@ describe("Flexible sync", function () {
       });
 
       it("returns the named subscription", function () {
-        const { subs, sub } = addDefaultSubscription({ name: "test" });
+        const { subs, sub } = addPersonSubscription({ name: "test" });
 
         expect(subs.findByName("test")).to.equal(sub);
       });
@@ -129,7 +130,7 @@ describe("Flexible sync", function () {
       });
 
       it("returns a query with equivalent RQL respresentation's subscription", function () {
-        const { subs, sub } = addDefaultSubscription();
+        const { subs, sub } = addPersonSubscription();
 
         expect(subs.find(this.realm.objects("Person"))).to.equal(sub);
       });
@@ -140,7 +141,7 @@ describe("Flexible sync", function () {
           expect(subs.state).to.equal(Realm.SubscriptionState.Pending);
         });
 
-        // TOOD do we want to duplicate tests from waitForSynchronisation here?
+        // TOOD do we want to duplicate tests from waitForSynchronization here?
       });
 
       describe("#error", function () {
@@ -150,14 +151,14 @@ describe("Flexible sync", function () {
         });
 
         it("is null if there was no error synchronising subscriptions", async function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
           await subs.waitForSynchronization();
 
           expect(subs.error).to.be.null;
         });
 
         it("is contains the error if there was an error synchronising subscriptions", async function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
           // TODO simulate error
           await subs.waitForSynchronization();
 
@@ -168,7 +169,7 @@ describe("Flexible sync", function () {
 
       describe("#waitForSynchronization", function () {
         it("waits for subscriptions to be in a ready state", async function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
           expect(subs.state).to.equal(Realm.SubscriptionState.Pending);
 
           await subs.waitForSynchronization();
@@ -177,7 +178,7 @@ describe("Flexible sync", function () {
         });
 
         it("resolves if subscriptions are already in a ready state", async function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
           await subs.waitForSynchronization();
           await subs.waitForSynchronization();
 
@@ -185,7 +186,7 @@ describe("Flexible sync", function () {
         });
 
         it("throws if there is an error synchronising subscriptions", async function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
           expect(subs.state).to.equal(Realm.SubscriptionState.Pending);
 
           // TODO simulate error
@@ -198,7 +199,7 @@ describe("Flexible sync", function () {
           // TODO what is the proper way to do this?
           const otherClientRealm = new Realm({ schema: [PersonSchema], sync: { flexible: true } });
 
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
 
           const otherClientSubs = otherClientRealm.getSubscriptions();
 
@@ -224,7 +225,7 @@ describe("Flexible sync", function () {
         });
 
         it("throws an error if SubscriptionSet.remvove is called outside of a write/writeAsync() callback", function () {
-          const { subs, sub } = addDefaultSubscription();
+          const { subs, sub } = addPersonSubscription();
 
           expect(function () {
             subs.remove(sub);
@@ -243,7 +244,7 @@ describe("Flexible sync", function () {
           });
 
           it("does not throw an error if SubscriptionSet.remove is called inside a write() callback", function () {
-            const { sub, subs } = addDefaultSubscription();
+            const { sub, subs } = addPersonSubscription();
 
             expect(function () {
               subs.write(function () {
@@ -271,7 +272,7 @@ describe("Flexible sync", function () {
           });
 
           it("handles multiple updates in a single batch", function () {
-            const { subs, sub } = addDefaultSubscription();
+            const { subs, sub } = addPersonSubscription();
 
             subs.write(function () {
               subs.removeSubscription(sub);
@@ -297,7 +298,7 @@ describe("Flexible sync", function () {
           });
 
           it("does not throw an error if SubscriptionSet.remove is called inside a writeAsync() callback", async function () {
-            const { sub, subs } = addDefaultSubscription();
+            const { sub, subs } = addPersonSubscription();
 
             expect(
               await subs.writeAsync(function () {
@@ -325,7 +326,7 @@ describe("Flexible sync", function () {
           });
 
           it("handles multiple updates in a single batch", async function () {
-            const { subs, sub } = addDefaultSubscription();
+            const { subs, sub } = addPersonSubscription();
 
             await subs.writeAsync(function () {
               subs.removeSubscription(sub);
@@ -343,13 +344,13 @@ describe("Flexible sync", function () {
         // Behaviour is mostly tested in #find and #findByName
 
         it("returns a subscription object", function () {
-          const { sub } = addDefaultSubscription();
+          const { sub } = addPersonSubscription();
           expect(sub).is.instanceOf(Realm.Subscription);
         });
 
         describe("updateExisting", function () {
           it("throws and does not add the subscription if a subscription with the same name but different query is added, and updateExisting is false", function () {
-            const { subs } = addDefaultSubscription({ name: "test" });
+            const { subs } = addPersonSubscription({ name: "test" });
             const query = this.realm.objects("Dog");
 
             expect(function () {
@@ -362,7 +363,7 @@ describe("Flexible sync", function () {
           });
 
           function testUpdateExistingTrue(addOptions: Realm.SubscriptionOptions = {}) {
-            const { subs } = addDefaultSubscription({ name: "test" });
+            const { subs } = addPersonSubscription({ name: "test" });
             const query = this.realm.objects("Dog");
             let sub;
 
@@ -387,7 +388,7 @@ describe("Flexible sync", function () {
 
       describe("#removeByName", function () {
         it("returns false and does not remove any subscriptions if the subscription is not found", function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
 
           subs.write(function () {
             expect(subs.removeByName("test")).to.be.false;
@@ -396,7 +397,7 @@ describe("Flexible sync", function () {
         });
 
         it("returns true and removes the subscription if the subscription is found", function () {
-          const { subs } = addDefaultSubscription({ name: "test" });
+          const { subs } = addPersonSubscription({ name: "test" });
 
           subs.write(function () {
             expect(subs.removeByName("test")).to.be.true;
@@ -431,7 +432,7 @@ describe("Flexible sync", function () {
 
       describe("#removeSubscription", function () {
         it("returns false if the subscription is not found", function () {
-          const { subs, sub } = addDefaultSubscription();
+          const { subs, sub } = addPersonSubscription();
           subs.write(function () {
             subs.addSubscription(this.realm.objects("Dog"));
           });
@@ -446,7 +447,7 @@ describe("Flexible sync", function () {
         });
 
         it("returns true and removes the subscription if the subscription is found", function () {
-          const { subs, sub } = addDefaultSubscription();
+          const { subs, sub } = addPersonSubscription();
 
           subs.write(function () {
             expect(subs.removeSubscription(sub)).to.be.true;
@@ -465,8 +466,8 @@ describe("Flexible sync", function () {
         });
 
         it("removes all subscriptions and returns the number of subscriptions removed", function () {
-          const { subs } = addDefaultSubscription();
-          addDefaultSubscription();
+          const { subs } = addPersonSubscription();
+          addPersonSubscription();
 
           subs.write(function () {
             expect(subs.removeAll()).to.equal(2);
@@ -477,7 +478,7 @@ describe("Flexible sync", function () {
 
       describe("#removeByObjectType", function () {
         it("returns 0 if no subscriptions for the object type exist", function () {
-          const { subs } = addDefaultSubscription();
+          const { subs } = addPersonSubscription();
 
           subs.write(function () {
             expect(subs.removeByObjectType("Dog")).to.equal(0);
@@ -486,8 +487,8 @@ describe("Flexible sync", function () {
         });
 
         it("removes all subscriptions for the object type and returns the number of subscriptions removed", function () {
-          const { subs } = addDefaultSubscription();
-          addDefaultSubscription();
+          const { subs } = addPersonSubscription();
+          addPersonSubscription();
           addSubscription(this.realm.objects("Dog"));
 
           subs.write(function () {
@@ -538,6 +539,35 @@ describe("Flexible sync", function () {
     authenticateUserBefore();
     openRealmBeforeEach({ schema: [PersonSchema], sync: { flexible: true } });
 
-    it("syncs changes to a subscribed collection", function () {});
+    async function addSubscriptionAndPerson(query: Realm.Results) {
+      const { subs } = addSubscription(query);
+      await subs.waitForSynchronization();
+
+      expect(this.realm.objects("Person")).to.have.length(0);
+
+      this.realm.write(() => {
+        this.realm.create<IPerson>("Person", { name: "Tom", age: 36 });
+      });
+
+      itUploadsDeletesAndDownloads();
+    }
+
+    it("syncs added items to a subscribed collection", async function () {
+      await addSubscriptionAndPerson(this.realm.objects("Person"));
+
+      expect(this.realm.objects("Person")).to.have.length(1);
+    });
+
+    it("syncs added items to a subscribed collection with a filter", async function () {
+      await addSubscriptionAndPerson(this.realm.objects("Person").filtered("age > 30"));
+
+      expect(this.realm.objects("Person")).to.have.length(1);
+    });
+
+    it("does not sync added items not matching the filter", async function () {
+      await addSubscriptionAndPerson(this.realm.objects("Person").filtered("age < 30"));
+
+      expect(this.realm.objects("Person")).to.have.length(0);
+    });
   });
 });
