@@ -50,8 +50,12 @@ local.properties
 
 # Visual Studio Code
 .vscode
+<<<<<<< HEAD
 compile_commands.json
 .cache
+=======
+.ccls-cache
+>>>>>>> WIP on Subscription c++ class
 
 # Tests
 object-server-for-testing/

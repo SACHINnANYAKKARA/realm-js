@@ -62,22 +62,23 @@ class SubscriptionClass : public ClassDefinition<T, realm::js::Subscription<T>> 
 public:
     const std::string name = "Subscription";
 
+    // TODO remove these?
     static void constructor(ContextType, ObjectType, Arguments&);
     static FunctionType create_constructor(ContextType);
     static ObjectType create_instance(ContextType, realm::sync::Subscription);
 
     static void get_created_at(ContextType, ObjectType, ReturnValue&);
-    //    static void get_updated_at(ContextType, ObjectType, ReturnValue &);
-    //    static void get_name(ContextType, ObjectType, ReturnValue &);
-    //    static void get_object_class_name(ContextType, ObjectType, ReturnValue &);
-    //    static void get_query_string(ContextType, ObjectType, ReturnValue &);
+    static void get_updated_at(ContextType, ObjectType, ReturnValue&);
+    static void get_name(ContextType, ObjectType, ReturnValue&);
+    static void get_object_class_name(ContextType, ObjectType, ReturnValue&);
+    static void get_query_string(ContextType, ObjectType, ReturnValue&);
 
     PropertyMap<T> const properties = {
         {"createdAt", {wrap<get_created_at>, nullptr}},
-        //        {"updatedAt", {wrap<get_updated_at>, nullptr}},
-        //        {"name", {wrap<get_name>, nullptr}},
-        //        {"objectClassName", {wrap<get_object_class_name>, nullptr}},
-        //        {"queryString", {wrap<get_query_string>, nullptr}},
+        {"updatedAt", {wrap<get_updated_at>, nullptr}},
+        {"name", {wrap<get_name>, nullptr}},
+        {"objectClassName", {wrap<get_object_class_name>, nullptr}},
+        {"queryString", {wrap<get_query_string>, nullptr}},
     };
 };
 
@@ -93,11 +94,6 @@ inline typename T::Function SubscriptionClass<T>::create_constructor(ContextType
 {
     FunctionType test_constructor = ObjectWrap<T, SubscriptionClass<T>>::create_constructor(ctx);
     return test_constructor;
-
-    // PropertyAttributes attributes = ReadOnly | DontEnum | DontDelete;
-    // Object::set_property(ctx, sync_constructor, "User", ObjectWrap<T, UserClass<T>>::create_constructor(ctx),
-    // attributes); Object::set_property(ctx, sync_constructor, "Session", ObjectWrap<T,
-    // SessionClass<T>>::create_constructor(ctx), attributes);
 }
 
 template <typename T>
@@ -107,16 +103,11 @@ typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm:
 }
 
 /**
- * @brief Implements JavaScript Set's `.size` property
- *
- *  Returns the number of elements in the SetClass.
- *  See [MDN's reference
- * documentation](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set/size)
+ * @brief Get the created date of the subscription
  *
  * @param ctx JS context
- * @param object \ref ObjectType wrapping the SetClass itself
- * @param return_value \ref ReturnValue wrapping an integer that gives the number of elements in the set to return to
- * the JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an Date containing the created date
  */
 template <typename T>
 void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType object, ReturnValue& return_value)
@@ -124,6 +115,63 @@ void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType object, Re
     auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
     return_value.set(Object::create_date(ctx, sub->created_at().get_nanoseconds()));
 }
+
+/**
+ * @brief Get the updated date of the subscription
+ *
+ * @param ctx JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an Date containing the updated date
+ */
+template <typename T>
+void SubscriptionClass<T>::get_updated_at(ContextType ctx, ObjectType object, ReturnValue& return_value)
+{
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    return_value.set(Object::create_date(ctx, sub->updated_at().get_nanoseconds()));
+}
+
+/**
+ * @brief Get the name of the subscription
+ *
+ * @param ctx JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an string containing the name
+ */
+template <typename T>
+void SubscriptionClass<T>::get_name(ContextType ctx, ObjectType object, ReturnValue& return_value)
+{
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    return_value.set(std::string{sub->name()});
+}
+
+/**
+ * @brief Get the object class name of the subscription
+ *
+ * @param ctx JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an string containing the object class name
+ */
+template <typename T>
+void SubscriptionClass<T>::get_object_class_name(ContextType ctx, ObjectType object, ReturnValue& return_value)
+{
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    return_value.set(std::string{sub->object_class_name()});
+}
+
+/**
+ * @brief Get the query string of the subscription
+ *
+ * @param ctx JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an string containing the query string
+ */
+template <typename T>
+void SubscriptionClass<T>::get_query_string(ContextType ctx, ObjectType object, ReturnValue& return_value)
+{
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    return_value.set(std::string{sub->query_string()});
+}
+
 
 } // namespace js
 } // namespace realm
