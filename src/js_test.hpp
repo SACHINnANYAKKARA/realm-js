@@ -29,6 +29,30 @@
 namespace realm {
 namespace js {
 
+
+struct SubscriptionStoreFixture {
+    SubscriptionStoreFixture(const std::string path)
+        : db(DB::create(sync::make_client_replication(), path))
+    {
+        auto write = db->start_write();
+        auto a_table = write->get_or_add_table_with_primary_key("class_a", type_Int, "_id");
+        a_table_key = a_table->get_key();
+        if (foo_col = a_table->get_column_key("foo"); !foo_col) {
+            foo_col = a_table->add_column(type_String, "foo");
+        }
+        if (bar_col = a_table->get_column_key("bar"); !bar_col) {
+            bar_col = a_table->add_column(type_Int, "bar");
+        }
+        write->commit();
+    }
+
+    DBRef db;
+    TableKey a_table_key;
+    ColKey foo_col;
+    ColKey bar_col;
+};
+
+
 template <typename T>
 class TestClass : public ClassDefinition<T, void*> {
     using ContextType = typename T::Context;
@@ -55,6 +79,9 @@ public:
     MethodMap<T> const static_methods = {
         {"set", wrap<set>},
     };
+
+private:
+
 };
 
 template <typename T>
@@ -65,33 +92,11 @@ inline typename T::Function TestClass<T>::create_constructor(ContextType ctx)
     return test_constructor;
 }
 
-struct SubscriptionStoreFixture {
-    SubscriptionStoreFixture(const std::string path)
-        : db(DB::create(sync::make_client_replication(), path))
-    {
-        auto write = db->start_write();
-        auto a_table = write->get_or_add_table_with_primary_key("class_a", type_Int, "_id");
-        a_table_key = a_table->get_key();
-        if (foo_col = a_table->get_column_key("foo"); !foo_col) {
-            foo_col = a_table->add_column(type_String, "foo");
-        }
-        if (bar_col = a_table->get_column_key("bar"); !bar_col) {
-            bar_col = a_table->add_column(type_Int, "bar");
-        }
-        write->commit();
-    }
-
-    DBRef db;
-    TableKey a_table_key;
-    ColKey foo_col;
-    ColKey bar_col;
-};
-
 template <typename T>
 void TestClass<T>::set(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
 {
-    SubscriptionStoreFixture fixture("test.realm");
-    realm::sync::SubscriptionStore store(fixture.db);
+    static SubscriptionStoreFixture fixture {"test.realm"};
+    static realm::sync::SubscriptionStore store {fixture.db};
 
     auto latest = store.get_latest();
     auto out = latest.make_mutable_copy();

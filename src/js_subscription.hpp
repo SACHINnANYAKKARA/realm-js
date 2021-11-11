@@ -193,9 +193,13 @@ public:
     };
 
     static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void find_by_name(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void find(ContextType, ObjectType, Arguments &, ReturnValue &);
 
     MethodMap<T> const methods = {
         {"getSubscriptions", wrap<get_subscriptions>},
+        {"findByName", wrap<find_by_name>},
+        {"find", wrap<find>},
     };
 };
 
@@ -208,35 +212,89 @@ typename T::Object SubscriptionsClass<T>::create_instance(ContextType ctx, realm
  * @brief Get whether the subscriptions collection is empty or not
  *
  * @param ctx JS context
- * @param object \ref ObjectType wrapping the SubscriptionSet
- * @param return_value \ref ReturnValue wrapping an string containing the query string
+ * @param object \ref TODO
+ * @param return_value \ref TODO
  */
 template <typename T>
 void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType object, ReturnValue& return_value)
 {
-    auto subscription_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
-    return_value.set(subscription_set->size() == 0);
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    return_value.set(sub_set->size() == 0);
 }
 
 /**
  * @brief Get a readonly snapshot of the subscriptions
  *
  * @param ctx JS context
- * @param object \ref ObjectType wrapping the SubscriptionSet
- * @param return_value \ref ReturnValue wrapping an string containing the query string
+ * @param object \ref TODO
+ * @param return_value \ref TODO
  */
 template <typename T>
 void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
 {
-    auto subscription_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
 
     auto subs = std::vector<ValueType>();
-    for (auto& sub : *subscription_set) {
+    for (auto& sub : *sub_set) {
         subs.emplace_back(SubscriptionClass<T>::create_instance(ctx, sub));
     }
 
-    auto js_subs = Object::create_array(ctx, subs);
-    return_value.set(js_subs);
+    auto subs_array = Object::create_array(ctx, subs);
+    return_value.set(subs_array);
+}
+
+/**
+ * @brief Find a subscription by name
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::find_by_name(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
+{
+    std::string name = Value::validated_to_string(ctx, args[0], "name");
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+
+    auto sub_it = sub_set->find(name);
+
+    if (sub_it != sub_set->end()) {
+        auto sub = SubscriptionClass<T>::create_instance(ctx, *sub_it);
+        return_value.set(sub);
+    }
+    else {
+        return_value.set_null();
+    }
+}
+
+/**
+ * @brief Find a subscription by query
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::find(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
+{
+    auto arg = Value::validated_to_object(ctx, args[0], "object");
+    if (!Object::template is_instance<ResultsClass<T>>(ctx, arg)) {
+        throw std::runtime_error("Argument to 'findByName' must be a collection of Realm objects.");
+    }
+
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    auto results = get_internal<T, ResultsClass<T>>(ctx, arg);
+    auto query = results->get_query();
+
+    auto sub_it = sub_set->find(query);
+
+    if (sub_it != sub_set->end()) {
+        auto sub = SubscriptionClass<T>::create_instance(ctx, *sub_it);
+        return_value.set(sub);
+    }
+    else {
+        return_value.set_null();
+    }
 }
 
 } // namespace js
