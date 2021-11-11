@@ -22,6 +22,10 @@
 #include "js_subscription.hpp"
 #include "realm/sync/subscriptions.hpp"
 
+#include "../vendor/realm-core/test/test.hpp"
+#include "../vendor/realm-core/test/util/test_path.hpp"
+#include "realm/sync/noinst/client_history_impl.hpp"
+
 namespace realm {
 namespace js {
 
@@ -46,10 +50,12 @@ public:
     static FunctionType create_constructor(ContextType);
     static ObjectType create_instance(ContextType, SharedApp);
 
-    static void test(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void sub(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void set(ContextType, ObjectType, Arguments&, ReturnValue&);
 
     MethodMap<T> const static_methods = {
-        {"_test", wrap<test>},
+        {"sub", wrap<sub>},
+        {"set", wrap<set>},
     };
 };
 
@@ -67,7 +73,7 @@ inline typename T::Function TestClass<T>::create_constructor(ContextType ctx)
 }
 
 template <typename T>
-void TestClass<T>::test(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void TestClass<T>::sub(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
 {
     realm::sync::Subscription s;
     return_value.set(SubscriptionClass<T>::create_instance(ctx, s));
@@ -85,6 +91,48 @@ void TestClass<T>::test(ContextType ctx, ObjectType this_object, Arguments& args
     // }
 
     // auto app = *get_internal<T, AppClass<T>>(ctx, this_object);
+}
+
+struct SubscriptionStoreFixture {
+    SubscriptionStoreFixture(const std::string path)
+        : db(DB::create(sync::make_client_replication(), path))
+    {
+        auto write = db->start_write();
+        auto a_table = write->get_or_add_table_with_primary_key("class_a", type_Int, "_id");
+        a_table_key = a_table->get_key();
+        if (foo_col = a_table->get_column_key("foo"); !foo_col) {
+            foo_col = a_table->add_column(type_String, "foo");
+        }
+        if (bar_col = a_table->get_column_key("bar"); !bar_col) {
+            bar_col = a_table->add_column(type_Int, "bar");
+        }
+        write->commit();
+    }
+
+    DBRef db;
+    TableKey a_table_key;
+    ColKey foo_col;
+    ColKey bar_col;
+};
+
+template <typename T>
+void TestClass<T>::set(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    SubscriptionStoreFixture fixture("test.realm");
+    realm::sync::SubscriptionStore store(fixture.db);
+
+    auto out = store.get_latest().make_mutable_copy();
+    auto read_tr = fixture.db->start_read();
+    Query query_a(read_tr->get_table("class_a"));
+
+    auto&& [it, inserted] = out.insert_or_assign("a sub", query_a);
+
+    out.update_state(realm::sync::SubscriptionSet::State::Complete);
+    out.commit();
+
+    auto latest = store.get_latest();
+
+    return_value.set(SubscriptionsClass<T>::create_instance(ctx, latest));
 }
 
 } // namespace js

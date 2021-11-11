@@ -47,11 +47,6 @@ class SubscriptionClass : public ClassDefinition<T, Subscription<T>> {
 public:
     const std::string name = "Subscription";
 
-    // TODO remove these?
-    // static void constructor(ContextType, ObjectType, Arguments&);
-    // static FunctionType create_constructor(ContextType);
-    // static ObjectType create_instance(ContextType, realm::sync::Subscription);
-
     static ObjectType create_instance(ContextType, realm::sync::Subscription);
 
     static void get_created_at(ContextType, ObjectType, ReturnValue&);
@@ -73,26 +68,6 @@ template<typename T>
 typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm::sync::Subscription subscription) {
     return create_object<T, SubscriptionClass<T>>(ctx, new Subscription<T>(std::move(subscription)));
 }
-
-// template <typename T>
-// void SubscriptionClass<T>::constructor(ContextType ctx, ObjectType this_object, Arguments& args)
-// {
-//     set_internal<T, SubscriptionClass<T>>(ctx, this_object,
-//                                           new realm::js::Subscription<T>(*(new realm::sync::Subscription())));
-// }
-
-// template <typename T>
-// inline typename T::Function SubscriptionClass<T>::create_constructor(ContextType ctx)
-// {
-//     FunctionType test_constructor = ObjectWrap<T, SubscriptionClass<T>>::create_constructor(ctx);
-//     return test_constructor;
-// }
-
-// template <typename T>
-// typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm::sync::Subscription sub)
-// {
-//     return create_object<T, SubscriptionClass<T>>(ctx, new realm::js::Subscription<T>(std::move(sub)));
-// }
 
 /**
  * @brief Get the created date of the subscription
@@ -164,65 +139,85 @@ void SubscriptionClass<T>::get_query_string(ContextType ctx, ObjectType object, 
     return_value.set(std::string{sub->query_string()});
 }
 
-// /**
-//  * @brief Glue class that provides an interface between \ref SetClass and \ref realm::object_store::Set
-//  *
-//  *  The Set class itself is an internal glue that delegates operations from \ref SetClass to
-//  *  \ref realm::object_store::Set.  It is used by Realm-JS's object management system, and it
-//  *  not meant to be instantiated directly.
-//  *
-//  * @tparam T The type of the elements that the Set will hold.  Inherited from \ref SetClass
-//  */
+/**
+ * @brief Glue class that provides an interface between \ref SetClass and \ref realm::object_store::Set
+ *
+ *  The Set class itself is an internal glue that delegates operations from \ref SetClass to
+ *  \ref realm::object_store::Set.  It is used by Realm-JS's object management system, and it
+ *  not meant to be instantiated directly.
+ *
+ * @tparam T The type of the elements that the Set will hold.  Inherited from \ref SetClass
+ */
 // template <typename T>
-// class SubscriptionSet : public realm::sync::SubscriptionSet {
+// class Subscriptions : public realm::sync::SubscriptionSet {
 // public:
-//     SubscriptionSet(const realm::sync::SubscriptionSet& subscriptionSet)
+//     Subscriptions(const realm::sync::SubscriptionSet& subscriptionSet)
 //         : realm::sync::SubscriptionSet(subscriptionSet)
 //     {
 //     }
-//     //    void derive_property_type(StringData const &object_name, Property &prop) const;
-
-//     std::vector<std::pair<Protected<typename T::Function>, NotificationToken>> m_notification_tokens;
 // };
 
-// template <typename T>
-// class SubscriptionSetClass : public ClassDefinition<T, realm::js::SubscriptionSet<T>> {
-//     using ContextType = typename T::Context;
-//     using FunctionType = typename T::Function;
-//     using ObjectType = typename T::Object;
-//     using ValueType = typename T::Value;
-//     using Context = js::Context<T>;
-//     using String = js::String<T>;
-//     using Value = js::Value<T>;
-//     using Object = js::Object<T>;
-//     using Function = js::Function<T>;
-//     using ReturnValue = js::ReturnValue<T>;
-//     using Arguments = js::Arguments<T>;
+template<typename T>
+class Subscriptions : public realm::sync::SubscriptionSet {
+  public:
+    Subscriptions(const realm::sync::SubscriptionSet &s) : realm::sync::SubscriptionSet(s) {}
+};
 
-// public:
-//     const std::string name = "SubscriptionSet";
+template <typename T>
+class SubscriptionsClass : public ClassDefinition<T, Subscriptions<T>> {
+    using ContextType = typename T::Context;
+    using FunctionType = typename T::Function;
+    using ObjectType = typename T::Object;
+    using ValueType = typename T::Value;
+    using Context = js::Context<T>;
+    using String = js::String<T>;
+    using Value = js::Value<T>;
+    using Object = js::Object<T>;
+    using Function = js::Function<T>;
+    using ReturnValue = js::ReturnValue<T>;
+    using Arguments = js::Arguments<T>;
 
-//     // TODO remove these?
-//     static void constructor(ContextType, ObjectType, Arguments&);
-//     static FunctionType create_constructor(ContextType);
-//     static ObjectType create_instance(ContextType, realm::sync::Subscription);
+public:
+    const std::string name = "Subscriptions";
 
-//     static void get_empty(ContextType, ObjectType, ReturnValue&);
-//     static void get_state(ContextType, ObjectType, ReturnValue&);
-//     static void get_error(ContextType, ObjectType, ReturnValue&);
+    static ObjectType create_instance(ContextType, realm::sync::SubscriptionSet);
 
-//     PropertyMap<T> const properties = {
-//         {"empty", {wrap<get_empty>, nullptr}},
-//         {"state", {wrap<get_state>, nullptr}},
-//         {"error", {wrap<get_error>, nullptr}},
-//     };
+    static void get_empty(ContextType, ObjectType, ReturnValue&);
+    // static void get_state(ContextType, ObjectType, ReturnValue&);
+    // static void get_error(ContextType, ObjectType, ReturnValue&);
 
-//     static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
+    PropertyMap<T> const properties = {
+        {"empty", {wrap<get_empty>, nullptr}},
+        // {"state", {wrap<get_state>, nullptr}},
+        // {"error", {wrap<get_error>, nullptr}},
+    };
 
-//     MethodMap<T> const methods = {
-//         {"getSubscriptions", wrap<get_subscriptions>},
-//     };
-// };
+    // static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
+
+    // MethodMap<T> const methods = {
+    //     {"getSubscriptions", wrap<get_subscriptions>},
+    // };
+};
+
+template<typename T>
+typename T::Object SubscriptionsClass<T>::create_instance(ContextType ctx, realm::sync::SubscriptionSet subscriptionSet) {
+    return create_object<T, SubscriptionsClass<T>>(ctx, new Subscriptions<T>(std::move(subscriptionSet)));
+}
+
+/**
+ * @brief Get whether the subscriptions collection is empty or not
+ *
+ * @param ctx JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an string containing the query string
+ */
+template <typename T>
+void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType object, ReturnValue& return_value)
+{
+    auto set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    return_value.set(set->size() == 0);
+}
+
 
 } // namespace js
 } // namespace realm

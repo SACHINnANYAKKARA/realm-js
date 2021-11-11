@@ -527,6 +527,7 @@ inline typename T::Function RealmClass<T>::create_constructor(ContextType ctx)
     FunctionType realm_object_constructor = ObjectWrap<T, RealmObjectClass<T>>::create_constructor(ctx);
     FunctionType results_constructor = ObjectWrap<T, ResultsClass<T>>::create_constructor(ctx);
     FunctionType subscription_constructor = ObjectWrap<T, SubscriptionClass<T>>::create_constructor(ctx);
+    FunctionType subscriptions_constructor = ObjectWrap<T, SubscriptionsClass<T>>::create_constructor(ctx);
     FunctionType test_constructor = ObjectWrap<T, TestClass<T>>::create_constructor(ctx);
 
     PropertyAttributes attributes = ReadOnly | DontEnum | DontDelete;
@@ -537,6 +538,7 @@ inline typename T::Function RealmClass<T>::create_constructor(ContextType ctx)
     Object::set_property(ctx, realm_constructor, "Results", results_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Object", realm_object_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Subscription", subscription_constructor, attributes);
+    Object::set_property(ctx, realm_constructor, "Subscriptions", subscriptions_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Test", test_constructor, attributes);
 
 #if REALM_ENABLE_SYNC
