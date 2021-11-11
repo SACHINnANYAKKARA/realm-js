@@ -192,11 +192,11 @@ public:
         // {"error", {wrap<get_error>, nullptr}},
     };
 
-    // static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
 
-    // MethodMap<T> const methods = {
-    //     {"getSubscriptions", wrap<get_subscriptions>},
-    // };
+    MethodMap<T> const methods = {
+        {"getSubscriptions", wrap<get_subscriptions>},
+    };
 };
 
 template<typename T>
@@ -214,10 +214,30 @@ typename T::Object SubscriptionsClass<T>::create_instance(ContextType ctx, realm
 template <typename T>
 void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType object, ReturnValue& return_value)
 {
-    auto set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
-    return_value.set(set->size() == 0);
+    auto subscription_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    return_value.set(subscription_set->size() == 0);
 }
 
+/**
+ * @brief Get a readonly snapshot of the subscriptions
+ *
+ * @param ctx JS context
+ * @param object \ref ObjectType wrapping the SubscriptionSet
+ * @param return_value \ref ReturnValue wrapping an string containing the query string
+ */
+template <typename T>
+void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
+{
+    auto subscription_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+
+    auto subs = std::vector<ValueType>();
+    for (auto& sub : *subscription_set) {
+        subs.emplace_back(SubscriptionClass<T>::create_instance(ctx, sub));
+    }
+
+    auto js_subs = Object::create_array(ctx, subs);
+    return_value.set(js_subs);
+}
 
 } // namespace js
 } // namespace realm

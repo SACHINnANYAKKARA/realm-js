@@ -50,11 +50,9 @@ public:
     static FunctionType create_constructor(ContextType);
     static ObjectType create_instance(ContextType, SharedApp);
 
-    static void sub(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void set(ContextType, ObjectType, Arguments&, ReturnValue&);
 
     MethodMap<T> const static_methods = {
-        {"sub", wrap<sub>},
         {"set", wrap<set>},
     };
 };
@@ -64,33 +62,7 @@ inline typename T::Function TestClass<T>::create_constructor(ContextType ctx)
 {
     FunctionType test_constructor = ObjectWrap<T, TestClass<T>>::create_constructor(ctx);
 
-    // PropertyAttributes attributes = ReadOnly | DontEnum | DontDelete;
-    // Object::set_property(ctx, sync_constructor, "User", ObjectWrap<T, UserClass<T>>::create_constructor(ctx),
-    // attributes); Object::set_property(ctx, sync_constructor, "Session", ObjectWrap<T,
-    // SessionClass<T>>::create_constructor(ctx), attributes);
-
     return test_constructor;
-}
-
-template <typename T>
-void TestClass<T>::sub(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
-{
-    realm::sync::Subscription s;
-    return_value.set(SubscriptionClass<T>::create_instance(ctx, s));
-    // return_value.set
-
-    // ObjectType arg = Value::validated_to_object(ctx, args[0], "object");
-
-    // if (Object::template is_instance<ResultsClass<T>>(ctx, arg)) {
-    //     auto results = get_internal<T, ResultsClass<T>>(ctx, arg);
-
-    //     return_value.set(Value::from_string(ctx, results->get_query().get_description()));
-    // }
-    // else {
-    //     return_value.set(Value::from_string(ctx, "Test!"));
-    // }
-
-    // auto app = *get_internal<T, AppClass<T>>(ctx, this_object);
 }
 
 struct SubscriptionStoreFixture {
@@ -121,16 +93,17 @@ void TestClass<T>::set(ContextType ctx, ObjectType this_object, Arguments& args,
     SubscriptionStoreFixture fixture("test.realm");
     realm::sync::SubscriptionStore store(fixture.db);
 
-    auto out = store.get_latest().make_mutable_copy();
+    auto latest = store.get_latest();
+    auto out = latest.make_mutable_copy();
     auto read_tr = fixture.db->start_read();
     Query query_a(read_tr->get_table("class_a"));
-
+    query_a.equal(fixture.foo_col, StringData("JBR")).greater_equal(fixture.bar_col, int64_t(1));
     auto&& [it, inserted] = out.insert_or_assign("a sub", query_a);
 
     out.update_state(realm::sync::SubscriptionSet::State::Complete);
     out.commit();
 
-    auto latest = store.get_latest();
+    latest = store.get_latest();
 
     return_value.set(SubscriptionsClass<T>::create_instance(ctx, latest));
 }
