@@ -22,6 +22,10 @@ realm = await Realm.open({
 });
 subs = realm.getSubscriptions();
 
+subs.waitForSynchronization(() => {
+  console.log("123");
+});
+
 let sub;
 q = realm.objects("Cat");
 subs.update((m) => {

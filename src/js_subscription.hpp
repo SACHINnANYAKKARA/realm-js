@@ -420,12 +420,14 @@ public:
     static void find_by_name(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void find(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void update(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void wait_for_synchronization(ContextType, ObjectType, Arguments&, ReturnValue&);
 
     MethodMap<T> const methods = {
         {"getSubscriptions", wrap<get_subscriptions>},
         {"findByName", wrap<find_by_name>},
         {"find", wrap<find>},
         {"update", wrap<update>},
+        {"waitForSynchronization", wrap<wait_for_synchronization>},
     };
 };
 
@@ -563,12 +565,42 @@ void SubscriptionsClass<T>::update(ContextType ctx, ObjectType this_object, Argu
         auto const& callback_return =
             Function<T>::callback(protected_ctx, protected_callback, protected_this, 1, arguments);
 
+        // TEMP testing
+        mutable_sub_set.update_state(realm::sync::SubscriptionSet::State::Complete);
         mutable_sub_set.commit();
+
         return_value.set(callback_return);
     }
     catch (...) {
         throw;
     }
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::wait_for_synchronization(ContextType ctx, ObjectType this_object, Arguments& args,
+                                                     ReturnValue& return_value)
+{
+    args.validate_count(1);
+
+    FunctionType callback = Value::validated_to_function(ctx, args[0]);
+    Protected<FunctionType> protected_callback(ctx, callback);
+    Protected<ObjectType> protected_this(ctx, this_object);
+    Protected<typename T::GlobalContext> protected_ctx(js::Context<T>::get_global_context(ctx));
+
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+
+    HANDLESCOPE(protected_ctx);
+    sub_set->get_state_change_notification(realm::sync::SubscriptionSet::State::Complete)
+        .get_async([&](StatusWith<realm::sync::SubscriptionSet::State> state) noexcept {
+            Function<T>::callback(protected_ctx, protected_callback, protected_this, 0, nullptr);
+        });
 }
 
 } // namespace js
