@@ -208,21 +208,30 @@ template <typename T>
 void MutableSubscriptionsClass<T>::add(ContextType ctx, ObjectType this_object, Arguments& args,
                                        ReturnValue& return_value)
 {
-    // args.validate_minimum(1);
-    // args.validate_maximum(2);
+    auto name_specified = false;
+    std::string name;
 
-    args.validate_count(1);
+    args.validate_between(1, 2);
 
-    auto results_arg = Value::validated_to_object(ctx, args[0], "object");
+    auto results_arg = Value::validated_to_object(ctx, args[0], "results");
     if (!Object::template is_instance<ResultsClass<T>>(ctx, results_arg)) {
         throw std::runtime_error("Argument to 'add' must be a collection of Realm objects.");
+    }
+
+    if (args.count == 2) {
+        auto options_arg = Value::validated_to_object(ctx, args[1], "options");
+        name = Object::validated_get_string(ctx, options_arg, "name", "name");
+        name_specified = true;
     }
 
     auto mutable_sub_set = get_internal<T, MutableSubscriptionsClass<T>>(ctx, this_object);
     auto results = get_internal<T, ResultsClass<T>>(ctx, results_arg);
     auto query = results->get_query();
 
-    mutable_sub_set->insert_or_assign(query);
+    // TODO sub_it not valid - lifetime issue?
+    auto [sub_it, result] =
+        name_specified ? mutable_sub_set->insert_or_assign(name, query) : mutable_sub_set->insert_or_assign(query);
+    return_value.set(SubscriptionClass<T>::create_instance(ctx, *sub_it));
 }
 
 /**
@@ -267,6 +276,7 @@ void MutableSubscriptionsClass<T>::remove(ContextType ctx, ObjectType this_objec
 {
     args.validate_count(1);
 
+    // TODO sort out naming of these
     auto results_arg = Value::validated_to_object(ctx, args[0], "object");
     if (!Object::template is_instance<ResultsClass<T>>(ctx, results_arg)) {
         throw std::runtime_error("Argument to 'remove' must be a collection of Realm objects.");
@@ -307,7 +317,7 @@ void MutableSubscriptionsClass<T>::remove_subscription(ContextType ctx, ObjectTy
     auto mutable_sub_set = get_internal<T, MutableSubscriptionsClass<T>>(ctx, this_object);
     auto sub_to_remove = get_internal<T, SubscriptionClass<T>>(ctx, sub_arg);
 
-    // TODO not sure how to this equality check - is it actually the same sub?
+    // TODO not tested due to add issue - not sure how to this equality check - is it actually the same sub?
     auto it = std::remove_if(mutable_sub_set->begin(), mutable_sub_set->end(), [sub_to_remove](auto& sub) {
         return &sub == sub_to_remove;
     });
@@ -349,7 +359,23 @@ template <typename T>
 void MutableSubscriptionsClass<T>::remove_by_object_type(ContextType ctx, ObjectType this_object, Arguments& args,
                                                          ReturnValue& return_value)
 {
+    args.validate_count(1);
+
+    std::string object_type = Value::validated_to_string(ctx, args[0], "objectType");
     auto mutable_sub_set = get_internal<T, MutableSubscriptionsClass<T>>(ctx, this_object);
+
+    // TODO this is just deleting one entry... how to do this properly?
+    auto it = std::remove_if(mutable_sub_set->begin(), mutable_sub_set->end(), [object_type](auto& sub) {
+        return sub.object_class_name() == object_type;
+    });
+
+    if (it != mutable_sub_set->end()) {
+        mutable_sub_set->erase(it);
+        return_value.set(true);
+    }
+    else {
+        return_value.set(false);
+    }
 }
 
 template <typename T>
@@ -394,24 +420,12 @@ public:
     static void find_by_name(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void find(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void update(ContextType, ObjectType, Arguments&, ReturnValue&);
-    static void add(ContextType, ObjectType, Arguments&, ReturnValue&);
-    static void remove_by_name(ContextType, ObjectType, Arguments&, ReturnValue&);
-    static void remove(ContextType, ObjectType, Arguments&, ReturnValue&);
-    static void remove_subscription(ContextType, ObjectType, Arguments&, ReturnValue&);
-    static void remove_all(ContextType, ObjectType, Arguments&, ReturnValue&);
-    static void remove_by_object_type(ContextType, ObjectType, Arguments&, ReturnValue&);
 
     MethodMap<T> const methods = {
         {"getSubscriptions", wrap<get_subscriptions>},
         {"findByName", wrap<find_by_name>},
         {"find", wrap<find>},
         {"update", wrap<update>},
-        {"add", wrap<add>},
-        {"removeByName", wrap<remove_by_name>},
-        {"remove", wrap<remove>},
-        {"removeSubscription", wrap<remove_subscription>},
-        {"removeAll", wrap<remove_all>},
-        {"removeByObjectType", wrap<remove_by_object_type>},
     };
 };
 

@@ -530,7 +530,8 @@ inline typename T::Function RealmClass<T>::create_constructor(ContextType ctx)
     FunctionType results_constructor = ObjectWrap<T, ResultsClass<T>>::create_constructor(ctx);
     FunctionType subscription_constructor = ObjectWrap<T, SubscriptionClass<T>>::create_constructor(ctx);
     FunctionType subscriptions_constructor = ObjectWrap<T, SubscriptionsClass<T>>::create_constructor(ctx);
-    FunctionType mutable_subscriptions_constructor = ObjectWrap<T, MutableSubscriptionsClass<T>>::create_constructor(ctx);
+    FunctionType mutable_subscriptions_constructor =
+        ObjectWrap<T, MutableSubscriptionsClass<T>>::create_constructor(ctx);
     FunctionType test_constructor = ObjectWrap<T, TestClass<T>>::create_constructor(ctx);
 
     PropertyAttributes attributes = ReadOnly | DontEnum | DontDelete;
@@ -542,7 +543,8 @@ inline typename T::Function RealmClass<T>::create_constructor(ContextType ctx)
     Object::set_property(ctx, realm_constructor, "Object", realm_object_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Subscription", subscription_constructor, attributes);
     Object::set_property(ctx, realm_constructor, "Subscriptions", subscriptions_constructor, attributes);
-    Object::set_property(ctx, realm_constructor, "MutableSubscriptions", mutable_subscriptions_constructor, attributes);
+    Object::set_property(ctx, realm_constructor, "MutableSubscriptions", mutable_subscriptions_constructor,
+                         attributes);
     Object::set_property(ctx, realm_constructor, "Test", test_constructor, attributes);
 
 #if REALM_ENABLE_SYNC
@@ -1470,11 +1472,12 @@ void RealmClass<T>::update_schema(ContextType ctx, ObjectType this_object, Argum
  * TODO
  */
 template <typename T>
-void RealmClass<T>::get_subscriptions(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void RealmClass<T>::get_subscriptions(ContextType ctx, ObjectType this_object, Arguments& args,
+                                      ReturnValue& return_value)
 {
     SharedRealm realm = *get_internal<T, RealmClass<T>>(ctx, this_object);
-    auto db = Realm::Internal::get_db(*realm);
-    auto s = realm::sync::SubscriptionStore(db);
+    static auto db = Realm::Internal::get_db(*realm);
+    static auto s = realm::sync::SubscriptionStore(db);
     auto ss = s.get_active();
     return_value.set(SubscriptionsClass<T>::create_instance(ctx, ss));
 }

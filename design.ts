@@ -5,14 +5,14 @@ interface Subscriptions {
   //  readonly empty: boolean;
 
   // Get a read-only snapshot of the subscriptions in the array
-  //  getSubscriptions(): ReadonlyArray<Subscription>;
+  // getSubscriptions(): ReadonlyArray<Subscription>;
 
   // Find a subscription by name. Return null if not found.
-  findByName<T>(name: string): Subscription<T> | null;
+  // findByName<T>(name: string): Subscription<T> | null;
 
   // Find a subscription by query. Return null if not found.
   // Will match both named and unnamed subscriptions.
-  find<T>(query: Realm.Results<T & Realm.Object>): Subscription<T> | null;
+  // find<T>(query: Realm.Results<T & Realm.Object>): Subscription<T> | null;
 
   // The state of this collection - is it acknowledged by the server and
   // has the data been downloaded locally?
@@ -30,27 +30,27 @@ interface Subscriptions {
   waitForSynchronization: () => Promise<void>;
 
   // Creates a transaction and updates this subscription set.
-  update: (callback: (mutableSubs) => void) => void;
+  // update: (callback: (mutableSubs) => void) => void;
 
   // Asynchronously creates and commits a transaction to update
   // the subscription set. Doesn't call waitForSynchronization.
-  updateAsync: (callback: () => void) => Promise<void>;
+  // Not doing? updateAsync: (callback: () => void) => Promise<void>;
 
   // Add a query to the list of subscriptions. Optionally, provide a name
   // and other parameters.
-  add: <T>(query: Realm.Results<T & Realm.Object>, options: SubscriptionOptions | undefined) => Subscription<T>;
+  // add: <T>(query: Realm.Results<T & Realm.Object>, options: SubscriptionOptions | undefined) => Subscription<T>;
 
   // Remove a subscription by name. Returns false if not found.
-  removeByName: (name: string) => boolean;
+  // removeByName: (name: string) => boolean;
 
   // Remove a subscription by query. Returns false if not found.
-  remove: <T>(query: Realm.Results<T & Realm.Object>) => boolean;
+  // remove: <T>(query: Realm.Results<T & Realm.Object>) => boolean;
 
   // Remove a concrete subscription. Returns false if not found.
   removeSubscription: <T>(subscription: Subscription<T>) => boolean;
 
   // Remove all subscriptions. Returns number of removed subscriptions.
-  removeAll: () => number;
+  // removeAll: () => number;
 
   // Remove all subscriptions for object type. Returns number of removed subscriptions.
   removeByObjectType: (objectType: string) => number;

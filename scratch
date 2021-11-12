@@ -1,0 +1,45 @@
+Realm = require(".");
+Cat = {
+  name: "Cat",
+  properties: {
+    _id: "objectId",
+    name: "string",
+    age: "int",
+    type: "string",
+  },
+};
+Dog = {
+  name: "Dog",
+  properties: {
+    _id: "objectId",
+    name: "string",
+    age: "int",
+    type: "string",
+  },
+};
+realm = await Realm.open({
+  schema: [Cat, Dog],
+});
+subs = realm.getSubscriptions();
+
+let sub;
+q = realm.objects("Cat");
+subs.update((m) => {
+  sub = m.add(q, { name: "cat_sub" });
+});
+
+subs.update((m) => m.removeByName("cat_sub"));
+
+realm.getSubscriptions().getSubscriptions();
+
+subs.update((m) => {});
+
+subs.update((m) => {
+  m.add(realm.objects("Cat"));
+  m.add(realm.objects("Cat").filtered("age > 10"));
+  m.add(realm.objects("Dog"));
+});
+
+subs.update((m) => {
+  m.add(realm.objects("Cat"));
+});
