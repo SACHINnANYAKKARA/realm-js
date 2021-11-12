@@ -343,6 +343,7 @@ public:
     static void object_for_object_id(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void get_schema_name_from_object(ContextType, ObjectType, Arguments&, ReturnValue&);
     static void update_schema(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void get_subscriptions(ContextType, ObjectType, Arguments&, ReturnValue&);
 
 #if REALM_ENABLE_SYNC
     static void async_open_realm(ContextType, ObjectType, Arguments&, ReturnValue&);
@@ -419,6 +420,7 @@ public:
         {"deleteModel", wrap<delete_model>},
         {"_updateSchema", wrap<update_schema>},
         {"_schemaName", wrap<get_schema_name_from_object>},
+        {"getSubscriptions", wrap<get_subscriptions>},
     };
 
     PropertyMap<T> const properties = {
@@ -1460,6 +1462,19 @@ void RealmClass<T>::update_schema(ContextType ctx, ObjectType this_object, Argum
 
     // Perform the schema update
     realm->update_schema(parsed_schema, realm->schema_version() + 1, nullptr, nullptr, true);
+}
+
+/**
+ * TODO
+ */
+template <typename T>
+void RealmClass<T>::get_subscriptions(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    SharedRealm realm = *get_internal<T, RealmClass<T>>(ctx, this_object);
+    auto db = Realm::Internal::get_db(*realm);
+    auto s = realm::sync::SubscriptionStore(db);
+    auto ss = s.get_active();
+    return_value.set(SubscriptionsClass<T>::create_instance(ctx, ss));
 }
 
 template <typename T>

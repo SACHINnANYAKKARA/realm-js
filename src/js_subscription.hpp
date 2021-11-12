@@ -20,6 +20,7 @@
 
 #include "js_class.hpp"
 #include "realm/sync/subscriptions.hpp"
+#include <algorithm>
 
 namespace realm {
 namespace js {
@@ -77,9 +78,9 @@ typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm:
  * @param return_value \ref ReturnValue wrapping an Date containing the created date
  */
 template <typename T>
-void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType object, ReturnValue& return_value)
+void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType this_object, ReturnValue& return_value)
 {
-    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, this_object);
     return_value.set(Object::create_date(ctx, sub->created_at().get_nanoseconds()));
 }
 
@@ -91,9 +92,9 @@ void SubscriptionClass<T>::get_created_at(ContextType ctx, ObjectType object, Re
  * @param return_value \ref ReturnValue wrapping an Date containing the updated date
  */
 template <typename T>
-void SubscriptionClass<T>::get_updated_at(ContextType ctx, ObjectType object, ReturnValue& return_value)
+void SubscriptionClass<T>::get_updated_at(ContextType ctx, ObjectType this_object, ReturnValue& return_value)
 {
-    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, this_object);
     return_value.set(Object::create_date(ctx, sub->updated_at().get_nanoseconds()));
 }
 
@@ -105,9 +106,9 @@ void SubscriptionClass<T>::get_updated_at(ContextType ctx, ObjectType object, Re
  * @param return_value \ref ReturnValue wrapping an string containing the name
  */
 template <typename T>
-void SubscriptionClass<T>::get_name(ContextType ctx, ObjectType object, ReturnValue& return_value)
+void SubscriptionClass<T>::get_name(ContextType ctx, ObjectType this_object, ReturnValue& return_value)
 {
-    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, this_object);
     return_value.set(std::string{sub->name()});
 }
 
@@ -119,9 +120,9 @@ void SubscriptionClass<T>::get_name(ContextType ctx, ObjectType object, ReturnVa
  * @param return_value \ref ReturnValue wrapping an string containing the object class name
  */
 template <typename T>
-void SubscriptionClass<T>::get_object_class_name(ContextType ctx, ObjectType object, ReturnValue& return_value)
+void SubscriptionClass<T>::get_object_class_name(ContextType ctx, ObjectType this_object, ReturnValue& return_value)
 {
-    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, this_object);
     return_value.set(std::string{sub->object_class_name()});
 }
 
@@ -133,9 +134,9 @@ void SubscriptionClass<T>::get_object_class_name(ContextType ctx, ObjectType obj
  * @param return_value \ref ReturnValue wrapping an string containing the query string
  */
 template <typename T>
-void SubscriptionClass<T>::get_query_string(ContextType ctx, ObjectType object, ReturnValue& return_value)
+void SubscriptionClass<T>::get_query_string(ContextType ctx, ObjectType this_object, ReturnValue& return_value)
 {
-    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, object);
+    auto sub = get_internal<T, SubscriptionClass<T>>(ctx, this_object);
     return_value.set(std::string{sub->query_string()});
 }
 
@@ -173,7 +174,7 @@ class SubscriptionsClass : public ClassDefinition<T, Subscriptions<T>> {
     using String = js::String<T>;
     using Value = js::Value<T>;
     using Object = js::Object<T>;
-    using Function = js::Function<T>;
+    // using Function = js::Function<T>;
     using ReturnValue = js::ReturnValue<T>;
     using Arguments = js::Arguments<T>;
 
@@ -195,11 +196,25 @@ public:
     static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
     static void find_by_name(ContextType, ObjectType, Arguments &, ReturnValue &);
     static void find(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void update(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void add(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void remove_by_name(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void remove(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void remove_subscription(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void remove_all(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void remove_by_object_type(ContextType, ObjectType, Arguments &, ReturnValue &);
 
     MethodMap<T> const methods = {
         {"getSubscriptions", wrap<get_subscriptions>},
         {"findByName", wrap<find_by_name>},
         {"find", wrap<find>},
+        {"update", wrap<update>},
+        {"add", wrap<add>},
+        {"removeByName", wrap<remove_by_name>},
+        {"remove", wrap<remove>},
+        {"removeSubscription", wrap<remove_subscription>},
+        {"removeAll", wrap<remove_all>},
+        {"removeByObjectType", wrap<remove_by_object_type>},
     };
 };
 
@@ -216,9 +231,9 @@ typename T::Object SubscriptionsClass<T>::create_instance(ContextType ctx, realm
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType object, ReturnValue& return_value)
+void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType this_object, ReturnValue& return_value)
 {
-    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
     return_value.set(sub_set->size() == 0);
 }
 
@@ -230,9 +245,11 @@ void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType object, Return
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
+void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
 {
-    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    args.validate_count(0);
+
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
 
     auto subs = std::vector<ValueType>();
     for (auto& sub : *sub_set) {
@@ -251,10 +268,12 @@ void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType object
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::find_by_name(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
+void SubscriptionsClass<T>::find_by_name(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
 {
+    args.validate_count(1);
+
     std::string name = Value::validated_to_string(ctx, args[0], "name");
-    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
 
     auto sub_it = sub_set->find(name);
 
@@ -275,15 +294,17 @@ void SubscriptionsClass<T>::find_by_name(ContextType ctx, ObjectType object, Arg
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::find(ContextType ctx, ObjectType object, Arguments& args, ReturnValue& return_value)
+void SubscriptionsClass<T>::find(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
 {
-    auto arg = Value::validated_to_object(ctx, args[0], "object");
-    if (!Object::template is_instance<ResultsClass<T>>(ctx, arg)) {
+    args.validate_count(1);
+
+    auto results_arg = Value::validated_to_object(ctx, args[0], "object");
+    if (!Object::template is_instance<ResultsClass<T>>(ctx, results_arg)) {
         throw std::runtime_error("Argument to 'findByName' must be a collection of Realm objects.");
     }
 
-    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, object);
-    auto results = get_internal<T, ResultsClass<T>>(ctx, arg);
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+    auto results = get_internal<T, ResultsClass<T>>(ctx, results_arg);
     auto query = results->get_query();
 
     auto sub_it = sub_set->find(query);
@@ -296,6 +317,174 @@ void SubscriptionsClass<T>::find(ContextType ctx, ObjectType object, Arguments& 
         return_value.set_null();
     }
 }
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::update(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    args.validate_count(1);
+    FunctionType callback = Value::validated_to_function(ctx, args[0]);
+
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+
+    try {
+        auto mutable_sub_set = sub_set->make_mutable_copy();
+        auto const& callback_return = Function<T>::call(ctx, callback, this_object, 0, nullptr);
+        return_value.set(callback_return);
+    } catch (...) {
+        throw;
+    }
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::add(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    // args.validate_minimum(1);
+    // args.validate_maximum(2);
+
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::remove_by_name(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    args.validate_count(1);
+
+    // TODO mutable
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+
+    args.validate_count(1);
+    std::string name = Value::validated_to_string(ctx, args[0], "name");
+
+    auto mutable_sub_set = sub_set->make_mutable_copy();
+
+    auto sub_it = mutable_sub_set.find(name);
+    if (sub_it != mutable_sub_set.end()) {
+        mutable_sub_set.erase(sub_it);
+        mutable_sub_set.commit();
+        return_value.set(true);
+    } else {
+        return_value.set(false);
+    }
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::remove(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    args.validate_count(1);
+
+    auto results_arg = Value::validated_to_object(ctx, args[0], "object");
+    if (!Object::template is_instance<ResultsClass<T>>(ctx, results_arg)) {
+        throw std::runtime_error("Argument to 'remove' must be a collection of Realm objects.");
+    }
+
+    // TODO mutable
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+    auto results = get_internal<T, ResultsClass<T>>(ctx, results_arg);
+    auto query = results->get_query();
+
+    auto sub_it = sub_set->find(query);
+    if (sub_it != sub_set->end()) {
+        sub_set->erase(sub_it);
+        return_value.set(true);
+    } else {
+        return_value.set(false);
+    }
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::remove_subscription(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    args.validate_count(1);
+
+    auto sub_arg = Value::validated_to_object(ctx, args[0], "object");
+    if (!Object::template is_instance<SubscriptionClass<T>>(ctx, sub_arg)) {
+        throw std::runtime_error("Argument to 'removeSubscription' must be a subscription.");
+    }
+
+    // TODO mutable
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+    auto sub_to_remove = get_internal<T, SubscriptionClass<T>>(ctx, sub_arg);
+
+    // TODO not sure how to this equality check - is it actually the same sub?
+    auto it = std::remove_if(sub_set->begin(), sub_set->end(), [sub_to_remove](auto& sub) {
+        return &sub == sub_to_remove;
+    });
+
+    if (it != sub_set->end()) {
+        sub_set->erase(it);
+        return_value.set(true);
+    } else {
+        return_value.set(false);
+    }
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::remove_all(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    args.validate_count(0);
+
+    // TODO mutable
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+    sub_set->clear();
+}
+
+/**
+ * @brief TODO
+ *
+ * @param ctx JS context
+ * @param object \ref TODO
+ * @param return_value \ref TODO
+ */
+template <typename T>
+void SubscriptionsClass<T>::remove_by_object_type(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+{
+    // TODO mutable
+    auto sub_set = get_internal<T, SubscriptionsClass<T>>(ctx, this_object);
+
+}
+
 
 } // namespace js
 } // namespace realm
