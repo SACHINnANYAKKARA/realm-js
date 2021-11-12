@@ -25,10 +25,13 @@
 namespace realm {
 namespace js {
 
-template<typename T>
+template <typename T>
 class Subscription : public realm::sync::Subscription {
-  public:
-    Subscription(const realm::sync::Subscription &s) : realm::sync::Subscription(s) {}
+public:
+    Subscription(const realm::sync::Subscription& s)
+        : realm::sync::Subscription(s)
+    {
+    }
 };
 
 template <typename T>
@@ -65,8 +68,9 @@ public:
     };
 };
 
-template<typename T>
-typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm::sync::Subscription subscription) {
+template <typename T>
+typename T::Object SubscriptionClass<T>::create_instance(ContextType ctx, realm::sync::Subscription subscription)
+{
     return create_object<T, SubscriptionClass<T>>(ctx, new Subscription<T>(std::move(subscription)));
 }
 
@@ -141,11 +145,13 @@ void SubscriptionClass<T>::get_query_string(ContextType ctx, ObjectType this_obj
 }
 
 
-
-template<typename T>
+template <typename T>
 class MutableSubscriptions : public realm::sync::SubscriptionSet {
-  public:
-    MutableSubscriptions(const realm::sync::SubscriptionSet &s) : realm::sync::SubscriptionSet(s) {}
+public:
+    MutableSubscriptions(const realm::sync::SubscriptionSet& s)
+        : realm::sync::SubscriptionSet(s)
+    {
+    }
 };
 
 template <typename T>
@@ -166,12 +172,12 @@ public:
 
     static ObjectType create_instance(ContextType, realm::sync::SubscriptionSet);
 
-    static void add(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_by_name(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_subscription(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_all(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_by_object_type(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void add(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_by_name(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_subscription(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_all(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_by_object_type(ContextType, ObjectType, Arguments&, ReturnValue&);
 
     MethodMap<T> const methods = {
         {"add", wrap<add>},
@@ -183,9 +189,12 @@ public:
     };
 };
 
-template<typename T>
-typename T::Object MutableSubscriptionsClass<T>::create_instance(ContextType ctx, realm::sync::SubscriptionSet subscriptionSet) {
-    return create_object<T, MutableSubscriptionsClass<T>>(ctx, new MutableSubscriptions<T>(std::move(subscriptionSet)));
+template <typename T>
+typename T::Object MutableSubscriptionsClass<T>::create_instance(ContextType ctx,
+                                                                 realm::sync::SubscriptionSet subscriptionSet)
+{
+    return create_object<T, MutableSubscriptionsClass<T>>(ctx,
+                                                          new MutableSubscriptions<T>(std::move(subscriptionSet)));
 }
 
 /**
@@ -196,7 +205,8 @@ typename T::Object MutableSubscriptionsClass<T>::create_instance(ContextType ctx
  * @param return_value \ref TODO
  */
 template <typename T>
-void MutableSubscriptionsClass<T>::add(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void MutableSubscriptionsClass<T>::add(ContextType ctx, ObjectType this_object, Arguments& args,
+                                       ReturnValue& return_value)
 {
     // args.validate_minimum(1);
     // args.validate_maximum(2);
@@ -223,7 +233,8 @@ void MutableSubscriptionsClass<T>::add(ContextType ctx, ObjectType this_object, 
  * @param return_value \ref TODO
  */
 template <typename T>
-void MutableSubscriptionsClass<T>::remove_by_name(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void MutableSubscriptionsClass<T>::remove_by_name(ContextType ctx, ObjectType this_object, Arguments& args,
+                                                  ReturnValue& return_value)
 {
     args.validate_count(1);
 
@@ -237,7 +248,8 @@ void MutableSubscriptionsClass<T>::remove_by_name(ContextType ctx, ObjectType th
         mutable_sub_set->erase(sub_it);
         mutable_sub_set->commit();
         return_value.set(true);
-    } else {
+    }
+    else {
         return_value.set(false);
     }
 }
@@ -250,7 +262,8 @@ void MutableSubscriptionsClass<T>::remove_by_name(ContextType ctx, ObjectType th
  * @param return_value \ref TODO
  */
 template <typename T>
-void MutableSubscriptionsClass<T>::remove(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void MutableSubscriptionsClass<T>::remove(ContextType ctx, ObjectType this_object, Arguments& args,
+                                          ReturnValue& return_value)
 {
     args.validate_count(1);
 
@@ -267,7 +280,8 @@ void MutableSubscriptionsClass<T>::remove(ContextType ctx, ObjectType this_objec
     if (sub_it != mutable_sub_set->end()) {
         mutable_sub_set->erase(sub_it);
         return_value.set(true);
-    } else {
+    }
+    else {
         return_value.set(false);
     }
 }
@@ -280,7 +294,8 @@ void MutableSubscriptionsClass<T>::remove(ContextType ctx, ObjectType this_objec
  * @param return_value \ref TODO
  */
 template <typename T>
-void MutableSubscriptionsClass<T>::remove_subscription(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void MutableSubscriptionsClass<T>::remove_subscription(ContextType ctx, ObjectType this_object, Arguments& args,
+                                                       ReturnValue& return_value)
 {
     args.validate_count(1);
 
@@ -300,7 +315,8 @@ void MutableSubscriptionsClass<T>::remove_subscription(ContextType ctx, ObjectTy
     if (it != mutable_sub_set->end()) {
         mutable_sub_set->erase(it);
         return_value.set(true);
-    } else {
+    }
+    else {
         return_value.set(false);
     }
 }
@@ -313,7 +329,8 @@ void MutableSubscriptionsClass<T>::remove_subscription(ContextType ctx, ObjectTy
  * @param return_value \ref TODO
  */
 template <typename T>
-void MutableSubscriptionsClass<T>::remove_all(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void MutableSubscriptionsClass<T>::remove_all(ContextType ctx, ObjectType this_object, Arguments& args,
+                                              ReturnValue& return_value)
 {
     args.validate_count(0);
 
@@ -329,15 +346,19 @@ void MutableSubscriptionsClass<T>::remove_all(ContextType ctx, ObjectType this_o
  * @param return_value \ref TODO
  */
 template <typename T>
-void MutableSubscriptionsClass<T>::remove_by_object_type(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void MutableSubscriptionsClass<T>::remove_by_object_type(ContextType ctx, ObjectType this_object, Arguments& args,
+                                                         ReturnValue& return_value)
 {
     auto mutable_sub_set = get_internal<T, MutableSubscriptionsClass<T>>(ctx, this_object);
 }
 
-template<typename T>
+template <typename T>
 class Subscriptions : public realm::sync::SubscriptionSet {
-  public:
-    Subscriptions(const realm::sync::SubscriptionSet &s) : realm::sync::SubscriptionSet(s) {}
+public:
+    Subscriptions(const realm::sync::SubscriptionSet& s)
+        : realm::sync::SubscriptionSet(s)
+    {
+    }
 };
 
 template <typename T>
@@ -369,16 +390,16 @@ public:
         // {"error", {wrap<get_error>, nullptr}},
     };
 
-    static void get_subscriptions(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void find_by_name(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void find(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void update(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void add(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_by_name(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_subscription(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_all(ContextType, ObjectType, Arguments &, ReturnValue &);
-    static void remove_by_object_type(ContextType, ObjectType, Arguments &, ReturnValue &);
+    static void get_subscriptions(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void find_by_name(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void find(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void update(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void add(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_by_name(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_subscription(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_all(ContextType, ObjectType, Arguments&, ReturnValue&);
+    static void remove_by_object_type(ContextType, ObjectType, Arguments&, ReturnValue&);
 
     MethodMap<T> const methods = {
         {"getSubscriptions", wrap<get_subscriptions>},
@@ -394,8 +415,10 @@ public:
     };
 };
 
-template<typename T>
-typename T::Object SubscriptionsClass<T>::create_instance(ContextType ctx, realm::sync::SubscriptionSet subscriptionSet) {
+template <typename T>
+typename T::Object SubscriptionsClass<T>::create_instance(ContextType ctx,
+                                                          realm::sync::SubscriptionSet subscriptionSet)
+{
     return create_object<T, SubscriptionsClass<T>>(ctx, new Subscriptions<T>(std::move(subscriptionSet)));
 }
 
@@ -421,7 +444,8 @@ void SubscriptionsClass<T>::get_empty(ContextType ctx, ObjectType this_object, R
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType this_object, Arguments& args,
+                                              ReturnValue& return_value)
 {
     args.validate_count(0);
 
@@ -444,7 +468,8 @@ void SubscriptionsClass<T>::get_subscriptions(ContextType ctx, ObjectType this_o
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::find_by_name(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void SubscriptionsClass<T>::find_by_name(ContextType ctx, ObjectType this_object, Arguments& args,
+                                         ReturnValue& return_value)
 {
     args.validate_count(1);
 
@@ -502,7 +527,8 @@ void SubscriptionsClass<T>::find(ContextType ctx, ObjectType this_object, Argume
  * @param return_value \ref TODO
  */
 template <typename T>
-void SubscriptionsClass<T>::update(ContextType ctx, ObjectType this_object, Arguments& args, ReturnValue& return_value)
+void SubscriptionsClass<T>::update(ContextType ctx, ObjectType this_object, Arguments& args,
+                                   ReturnValue& return_value)
 {
     args.validate_count(1);
 
@@ -518,15 +544,15 @@ void SubscriptionsClass<T>::update(ContextType ctx, ObjectType this_object, Argu
 
         auto mutable_sub_set = sub_set->make_mutable_copy();
 
-        ValueType arguments[] {
-            MutableSubscriptionsClass<T>::create_instance(ctx, mutable_sub_set)
-        };
+        ValueType arguments[]{MutableSubscriptionsClass<T>::create_instance(ctx, mutable_sub_set)};
 
-        auto const& callback_return = Function<T>::callback(protected_ctx, protected_callback, protected_this, 1, arguments);
+        auto const& callback_return =
+            Function<T>::callback(protected_ctx, protected_callback, protected_this, 1, arguments);
 
         mutable_sub_set.commit();
         return_value.set(callback_return);
-    } catch (...) {
+    }
+    catch (...) {
         throw;
     }
 }
