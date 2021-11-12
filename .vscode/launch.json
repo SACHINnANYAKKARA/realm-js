@@ -30,120 +30,83 @@
       "MIMode": "gdb",
       "setupCommands": [
         {
-            "name": "Build Realm Android",
-            "cwd": "${workspaceFolder}",
-            "program": "${workspaceFolder}/scripts/build-android.js",
-            "args": ["--arch=x86"],
-            "request": "launch",
-            "type": "node"
-        },
-        {
-            "name": "(gdb) Launch",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "node",
-            "args": [
-                "--expose_gc",
-                "${workspaceRoot}/tests/node_modules/jasmine/bin/jasmine.js",
-                "spec/unit_tests.js",
-                "--filter=."
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/tests",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug Node Unit Tests (rebuild)",
-            "preLaunchTask": "rebuild-node-tests",
-            "cwd": "${workspaceRoot}/tests",
-            "program": "${workspaceRoot}/tests/node_modules/jasmine/bin/jasmine.js",
-            "runtimeArgs": ["--expose_gc"],
-            "args": [
-                "spec/unit_tests.js",
-                "--filter=."
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Debug Node Unit Tests",
-            "cwd": "${workspaceRoot}/tests",
-            "program": "${workspaceRoot}/tests/node_modules/jasmine/bin/jasmine.js",
-            "runtimeArgs": ["--expose_gc"],
-            "args": [
-                "spec/unit_tests.js",
-                "--filter=."
-            ]
-        },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Start Stitch in Docker",
-            "cwd": "${workspaceRoot}/scripts",
-            "preLaunchTask": "start_stitch",
-        },
-        {
-            "type": "node",
-            "request": "attach",
-            "name": "Attach to Port",
-            "protocol": "inspector",
-            "address": "localhost",
-            "port": 5858
-        },
-        {
-          "type": "lldb",
-          "request": "launch",
-          "name": "LLDB Node",
-          "program": "node",
-          "args": ["--expose_gc"]
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
         }
-        {
-            "type": "lldb",
-            "request": "launch",
-            "name": "LLDB Launch Unit Tests",
-            "program": "node",
-            "args": [
-                "--expose_gc",
-                "${workspaceFolder}/tests/node_modules/jasmine/bin/jasmine.js",
-                "spec/unit_tests.js",
-                "--filter=${input:testFilter}"
-            ],
-            "cwd": "${workspaceFolder}/tests"
-        },
-    ],
-    "compounds": [
-        {
-            "name": "Start Server + Debug",
-            "configurations": [
-                "Start Stitch in Docker",
-                "Debug Node Unit Tests (rebuild)"
-            ]
-        },
-        {
-            "name": "Debug GDB + NodeJS",
-            "configurations": [
-                "(gdb) Launch",
-                "Attach to Port"
-            ]
-        }
-    ],
-    "inputs": [
-        {
-            "id": "testFilter",
-            "type": "promptString",
-            "default": ".",
-            "description": "Filtering used to limit what tests are run"
-        }
-    ]
+      ]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Node Unit Tests (rebuild)",
+      "preLaunchTask": "rebuild-node-tests",
+      "cwd": "${workspaceRoot}/tests",
+      "program": "${workspaceRoot}/tests/node_modules/jasmine/bin/jasmine.js",
+      "runtimeArgs": ["--expose_gc"],
+      "args": ["spec/unit_tests.js", "--filter=."]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Node Unit Tests",
+      "cwd": "${workspaceRoot}/tests",
+      "program": "${workspaceRoot}/tests/node_modules/jasmine/bin/jasmine.js",
+      "runtimeArgs": ["--expose_gc"],
+      "args": ["spec/unit_tests.js", "--filter=."]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Start Stitch in Docker",
+      "cwd": "${workspaceRoot}/scripts",
+      "preLaunchTask": "start_stitch"
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Port",
+      "protocol": "inspector",
+      "address": "localhost",
+      "port": 5858
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "LLDB Launch Unit Tests",
+      "program": "node",
+      "args": [
+        "--expose_gc",
+        "${workspaceFolder}/tests/node_modules/jasmine/bin/jasmine.js",
+        "spec/unit_tests.js",
+        "--filter=${input:testFilter}"
+      ],
+      "cwd": "${workspaceFolder}/tests"
+    },
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "LLDB Node",
+      "program": "node",
+      "args": ["--expose_gc"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Start Server + Debug",
+      "configurations": ["Start Stitch in Docker", "Debug Node Unit Tests (rebuild)"]
+    },
+    {
+      "name": "Debug GDB + NodeJS",
+      "configurations": ["(gdb) Launch", "Attach to Port"]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testFilter",
+      "type": "promptString",
+      "default": ".",
+      "description": "Filtering used to limit what tests are run"
+    }
+  ]
 }
